@@ -1,16 +1,51 @@
+import binascii
+
 from hexlighter import conf
+
+
+my_printables = map(chr, range(0x20, 0x7e))
+
+encoding2len = {
+    'hex':2,
+    'bin':8,
+}
 
 def is_byte(b):
     """ Returns True if b is a char byte """
     return isinstance(b, str) and len(b) == 1
 
 
-def is_byte_list(bl):
-    """ Returns True if bl is a char byte list """
-    res = isinstance(bl, list)
-    if res and len(bl) > 0:
-        return is_byte(bl[0])
-    return res
+class Decoder(object):
+    """Base class. Child classes allow transforming a line of input to a
+    RawByteList."""
+
+    name = None
+
+    def decode(self, input_line):
+        """Decodes an @input_line (str) to a @return RawByteList."""
+        raise NotImplementedError("Abstract method")
+
+
+class CommentedHexDecoder(object):
+    """Input must be <text> <hex>. For example:
+
+    this is a comment  0a3b640058c4a2
+    """
+
+    name = "hex"
+
+    def decode(self, input_line):
+        rbl = RawByteList()
+        sp = input_line.strip().rsplit(" ", 1)
+        if len(sp) > 1:
+            rbl.comment = sp[0]
+        str_hex = sp[-1]
+        try:
+            raw_bytes = binascii.unhexlify(str_hex)
+            rbl.set_bytes(raw_bytes)
+        except TypeError:
+            rbl.comment = "%s %s" % (rbl.comment, str_hex)
+        return rbl
 
 
 class RawByteFilter(object):
@@ -76,13 +111,13 @@ class RawByte(object):
     """ A raw byte with some additionnal information.
 
         Attributes:
-            @value: internal value (an str byte)
+            @value: internal value (a str byte)
             @diff: another RawByte to compare self with.
             @highlight: boolean indicating whether this byte is highlit or not.
     """
 
     def __init__(self, value, diff=None, highlight=False):
-        if not is_byte(b):
+        if not is_byte(value):
             raise ValueError("a byte (as str) should be provided")
         self.value = value
         self.diff = diff
@@ -181,6 +216,8 @@ class RawByteList(object):
 
     def _highlight(self, start=None, width=None, cycle=None):
         """Sets the highlight flat on highlit bytes"""
+        if (start is None or width is None) and conf.highlight is None:
+            return
         start = start if start is not None else conf.highlight[0]
         width = width if width is not None else conf.highlight[1]
         cycle = cycle if cycle is not None else conf.cycle
@@ -197,8 +234,10 @@ class RawByteList(object):
                 self._pbytes[i].highlight = True
 
     def _diff(self):
-        for raw_byte, diff_byte in zip(self._pbytes, ref._pbytes):
-            raw_byte.diff = diff_byte
+        # FIXME: handle that in main
+        if self.ref:
+            for raw_byte, diff_byte in zip(self._pbytes, self.ref._pbytes):
+                raw_byte.diff = diff_byte
 
     def _apply_start(self, start=None):
         start = start if start is not None else conf.start
@@ -213,6 +252,8 @@ class RawByteList(object):
             self._pbytes = self._pbytes[:width]
 
     def _apply_align(self, start=None, end=None):
+        if (start is None or end is None) and conf.align is None:
+            return
         start = start if start is not None else conf.align[0]
         end   = end   if end   is not None else conf.align[1]
         l = len(self._pbytes)
@@ -235,4 +276,98 @@ class RawByteList(object):
         f.add_filters(rules)
         if not f.match(self):
             self._pbytes = []
+
+
+class QualifiedChar(object):
+    """A simple character with special qualifiers (diff, highlight)
+    
+    Attributes:
+        @value: a char
+        @diff: boolean
+        @highlight: boolean
+    """
+
+    def __init__(self, value, diff=None, highlight=None):
+        self.value = value
+        self.diff = diff
+        self.highlight = highlight
+
+
+class EncodedByte(object):
+    """Represents an encoded RawByte
+
+    Attributes:
+        @value: a RawByte
+        @chars: a list of QualifiedChars
+    """
+
+    def __init__(self, raw_byte):
+        self.raw_byte = raw_byte
+        self.chars = []
+
+    def get_qchars(self):
+        """Returns a list of correctly qualified QualifiedChar that can
+        be used to render this encoded byte."""
+        if not self.chars:
+            self.encode()
+        return self.chars
+
+    def encode(self, encoding=None):
+        """Triggers the (re)generation of the internal list of QualifiedChar.
+        Automatically called when get_qchars is called. Can be called to force
+        reencoding.
+        """
+        enc = encoding if encoding is not None else conf.enc
+        self.chars = [QualifiedChar(c)
+                      for c in self._encode_raw_byte(self.raw_byte, enc)]
+        diff_chars = [QualifiedChar(c)
+                      for c in self._encode_raw_byte(self.raw_byte.diff, enc)]
+        for myqc, refqc in zip(self.chars, diff_chars):
+            if myqc != refqc:
+                myqc.diff = True
+            if self.raw_byte.highlight:
+                myqc.highlight = True
+
+    def _encode_raw_byte(self, raw_byte, encoding):
+        # ASCII option
+        if isinstance(self.raw_byte, NoByte):
+            return " " * encoding2len[encoding]
+        if conf.ascii and self.raw_byte.value in my_printables:
+            return self.raw_byte + " " * (encoding2len[encoding]-1)
+        if encoding == 'hex':
+            return binascii.hexlify(self.raw_byte.value)
+        elif encoding == 'bin':
+            return "{:08b}".format(ord(self.raw_byte))
+        else:
+            raise ValueError("Unknown encoding")
+
+
+class EncodedByteList(object):
+    """Represents a RawByteList encoded as characters (hex, bin...)
+
+    Attributes:
+        @rbl: the RawByteList this object represents
+    """
+    
+    def __init__(self, raw_byte_list):
+        self.rbl = raw_byte_list
+        self._ebl =  [EncodedByte(rb) for rb in self.rbl.get_bytes()]
+
+    def get_encoded_byte_list(self):
+        """Returns an EncodedByteList generated from the internal RawByteList.
+        """
+        return self._ebl
+
+
+class Renderer(object):
+    """ABSTRACT. A class that is able to render an EncodedByteList to a user.
+    """
+
+    def render(self, ebl):
+        """ABSTRACT. Render an EncodedByteList.
+
+        Args:
+            @ebl: an EncodedByteList
+        """
+        raise NotImplementedError("Abstract method")
 

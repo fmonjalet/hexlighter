@@ -62,6 +62,7 @@ opt['enc']       = ConfParam('enc', 'e', type=str, choices=available_encodings,
 opt['ascii']     = ConfParam('ascii', shortname='a',
                     help="Displays most displayable bytes as ascii characters")
 opt['start']     = ConfParam('start', 's', type=int, syntax=("start"),
+                    default=0,
                     help="Start offset: cuts the @start first bytes of each "
                     "line")
 opt['width']     = ConfParam('width', shortname='w', type=int, syntax=("width"),
@@ -73,7 +74,7 @@ opt['align']     = ConfParam('align', type=int, syntax=('start', 'end'),
 opt['min']       = ConfParam('min', type=int, syntax=("min_size"),
                     help="Minimum size to display")
 opt['filter']    = ConfParam('filter', shortname='f', type=str, nargs='+',
-                    syntax="n{=,!}XX",
+                    syntax="n{=,!}XX", default=[],
                     help="Filter lines that have byte @n set to @XX (in hex). "
                     "Use n=XX to keep lines that match and n!XX for lines that "
                     "do not match")
@@ -90,15 +91,17 @@ opt['ui']        = ConfParam('ui', 'x',
                     help="Start hexlighter's ncurses interface")
 
 parser = argparse.ArgumentParser()
+#FIXME
+parser.add_argument("file")
 for arg in opt.itervalues():
     arg.add_to_parser(parser)
 args = parser.parse_args()
 
-if args.w is not None:
-    args.w += args.s
+if args.width is not None:
+    args.width += args.start
 
 if args.sort is not None:
-    args.sort += args.s
+    args.sort += args.start
 
 globals().update(vars(args))
 
