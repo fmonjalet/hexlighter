@@ -11,13 +11,14 @@ encoding2len = {
 }
 
 def is_byte(b):
-    """ Returns True if b is a char byte """
+    """Returns True if b is a char byte"""
     return isinstance(b, str) and len(b) == 1
 
 
 class Decoder(object):
     """Base class. Child classes allow transforming a line of input to a
-    RawByteList."""
+    RawByteList.
+    """
 
     name = None
 
@@ -108,12 +109,12 @@ class RawByteFilter(object):
 
 
 class RawByte(object):
-    """ A raw byte with some additionnal information.
+    """A raw byte with some additionnal information.
 
-        Attributes:
-            @value: internal value (a str byte)
-            @diff: another RawByte to compare self with.
-            @highlight: boolean indicating whether this byte is highlit or not.
+    Attributes:
+        @value: internal value (a str byte)
+        @diff: another RawByte to compare self with.
+        @highlight: boolean indicating whether this byte is highlit or not.
     """
 
     def __init__(self, value, diff=None, highlight=False):
@@ -123,15 +124,27 @@ class RawByte(object):
         self.diff = diff
         self.highlight = highlight
 
+    def __cmp__(self, other):
+        if not isinstance(other, RawByte):
+            return 1
+        else:
+            return cmp(self.value, other.value)
+
+    def __str__(self):
+        return "RawByte(%s)" % binascii.hexlify(self.value)
+
 
 class NoByte(RawByte):
     """Represent an empty RawByte."""
     def __init__(self, diff=None, highlight=None):
         RawByte.__init__(self, None, diff, highlight)
 
+    def __str__(self):
+        return "NoByte"
+
 
 class RawByteList(object):
-    """ An abstraction for a list of bytes. Used to store and process bytes of
+    """An abstraction for a list of bytes. Used to store and process bytes of
     input. Inputs can be processed towards a reference RawByteList (self.ref).
     """
     def __init__(self):
@@ -234,7 +247,6 @@ class RawByteList(object):
                 self._pbytes[i].highlight = True
 
     def _diff(self):
-        # FIXME: handle that in main
         if self.ref:
             for raw_byte, diff_byte in zip(self._pbytes, self.ref._pbytes):
                 raw_byte.diff = diff_byte
@@ -320,26 +332,33 @@ class EncodedByte(object):
         enc = encoding if encoding is not None else conf.enc
         self.chars = [QualifiedChar(c)
                       for c in self._encode_raw_byte(self.raw_byte, enc)]
-        diff_chars = [QualifiedChar(c)
+        if self.raw_byte.diff is None:
+            diff_chars = self.chars
+        else:
+            diff_chars = [QualifiedChar(c)
                       for c in self._encode_raw_byte(self.raw_byte.diff, enc)]
+        if self.raw_byte.diff is not None:
+            diff = (self.raw_byte != self.raw_byte.diff)
+        else:
+            diff = False
         for myqc, refqc in zip(self.chars, diff_chars):
-            if myqc != refqc:
+            if myqc.value != refqc.value or (diff and not conf.precision):
                 myqc.diff = True
             if self.raw_byte.highlight:
                 myqc.highlight = True
 
     def _encode_raw_byte(self, raw_byte, encoding):
         # ASCII option
-        if isinstance(self.raw_byte, NoByte):
+        if isinstance(raw_byte, NoByte) or raw_byte is None:
             return " " * encoding2len[encoding]
-        if conf.ascii and self.raw_byte.value in my_printables:
-            return self.raw_byte + " " * (encoding2len[encoding]-1)
+        if conf.ascii and raw_byte.value in my_printables:
+            return raw_byte + " " * (encoding2len[encoding]-1)
         if encoding == 'hex':
-            return binascii.hexlify(self.raw_byte.value)
+            return binascii.hexlify(raw_byte.value)
         elif encoding == 'bin':
-            return "{:08b}".format(ord(self.raw_byte))
+            return "{:08b}".format(ord(raw_byte))
         else:
-            raise ValueError("Unknown encoding")
+            raise ValueError("Unknown encoding: %s" % encoding)
 
 
 class EncodedByteList(object):

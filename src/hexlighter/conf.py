@@ -57,7 +57,7 @@ opt['highlight'] = ConfParam('highlight', shortname="l", type=int,
 opt['cycle']     = ConfParam('cycle', type=int, syntax=("cycle-length"),
                     help="Highlit bytes are now highlit cyclically")
 opt['enc']       = ConfParam('enc', 'e', type=str, choices=available_encodings,
-                    syntax=("encoding"), default='hex',
+                    syntax="encoding", default='hex',
                     help="Encoding of bytes when displayed")
 opt['ascii']     = ConfParam('ascii', shortname='a',
                     help="Displays most displayable bytes as ascii characters")
@@ -87,8 +87,9 @@ opt['retro']     = ConfParam('retro',
 opt['disp-width'] = ConfParam('disp-width', type=int, syntax=("width"),
                      help="Maximum amount of character to display. Default is "
                      "computed from the terminal properties.")
-opt['ui']        = ConfParam('ui', 'x',
-                    help="Start hexlighter's ncurses interface")
+# TODO :)
+#opt['ui']        = ConfParam('ui', 'x',
+#                    help="Start hexlighter's ncurses interface")
 
 parser = argparse.ArgumentParser()
 #FIXME

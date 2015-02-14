@@ -2,11 +2,20 @@ from hexlighter.core import *
 from hexlighter import conf
 from hexlighter.termrenderer import TermRenderer
 
-if __name__ == "__main__":
+def main():
     f = open(conf.file, "r")
     renderer = TermRenderer()
     decoder = CommentedHexDecoder()
+    prev = None
     for line in f:
         rbl = decoder.decode(line)
+        if prev is not None:
+            rbl.ref = prev
+        if not conf.master or prev is None:
+            prev = rbl
         ebl = EncodedByteList(rbl)
         renderer.render(ebl)
+
+if __name__ == "__main__":
+    main()
+
