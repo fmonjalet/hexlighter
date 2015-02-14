@@ -1,9 +1,14 @@
+import sys
+
 from hexlighter.core import *
 from hexlighter import conf
 from hexlighter.termrenderer import TermRenderer
 
 def main():
-    f = open(conf.file, "r")
+    if conf.file:
+        f = open(conf.file, "r")
+    else:
+        f = sys.stdin
     renderer = TermRenderer()
     decoder = CommentedHexDecoder()
     prev = None

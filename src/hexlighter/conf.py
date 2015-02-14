@@ -1,5 +1,6 @@
 import argparse
 from collections import OrderedDict
+import os
 
 class ConfParam(object):
     """ Represent a global parameter of a program """
@@ -31,7 +32,7 @@ class ConfParam(object):
             nargs = len(self.syntax) if isinstance(self.syntax, tuple) else 1
         else:
             nargs = self.nargs
-        if nargs != 0:
+        if nargs != 0 and nargs != 1:
             kwargs["nargs"] = nargs
         if self.choices:
             kwargs["choices"] = self.choices
@@ -78,31 +79,41 @@ opt['filter']    = ConfParam('filter', shortname='f', type=str, nargs='+',
                     help="Filter lines that have byte @n set to @XX (in hex). "
                     "Use n=XX to keep lines that match and n!XX for lines that "
                     "do not match")
-opt['sort']      = ConfParam('sort', type=int, syntax=("from_offset"),
-                    default=0,
-                    help="Sorts the lines based on the [@from_offset:end] part "
-                    "of the line")
+#opt['sort']      = ConfParam('sort', type=int, syntax=("from_offset"),
+#                    default=0,
+#                    help="Sorts the lines based on the [@from_offset:end] part "
+#                    "of the line")
 opt['retro']     = ConfParam('retro',
                     help="Enables very basic coloring for old terminals")
 opt['disp-width'] = ConfParam('disp-width', type=int, syntax=("width"),
+                     default=None,
                      help="Maximum amount of character to display. Default is "
                      "computed from the terminal properties.")
-# TODO :)
+# TODO
 #opt['ui']        = ConfParam('ui', 'x',
 #                    help="Start hexlighter's ncurses interface")
 
 parser = argparse.ArgumentParser()
 #FIXME
-parser.add_argument("file")
+parser.add_argument("file", nargs="?",
+                    help="File on which to work. Lines must be in the following"
+                    " format: [<comment>] <hex>, for example: toto a5bc43")
 for arg in opt.itervalues():
     arg.add_to_parser(parser)
 args = parser.parse_args()
 
-if args.width is not None:
-    args.width += args.start
+#if args.sort is not None:
+#    args.sort += args.start
 
-if args.sort is not None:
-    args.sort += args.start
+if args.disp_width is None:
+    try:
+        res = os.popen('stty size 2> /dev/null', 'r').read().split()
+        if not res:
+            args.disp_width = 120
+        else:
+            args.disp_width = int(res[1])
+    except:
+        args.disp_width = 120
 
 globals().update(vars(args))
 

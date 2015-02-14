@@ -118,7 +118,7 @@ class RawByte(object):
     """
 
     def __init__(self, value, diff=None, highlight=False):
-        if not is_byte(value):
+        if not is_byte(value) and value is not None:
             raise ValueError("a byte (as str) should be provided")
         self.value = value
         self.diff = diff
@@ -241,7 +241,7 @@ class RawByteList(object):
         if cycle:
             for i in range(start, l - width, cycle):
                 for k in range(i, i + width):
-                    self._pbytes[i].highlight = True
+                    self._pbytes[k].highlight = True
         else:
             for i in range(start, start + width):
                 self._pbytes[i].highlight = True
@@ -352,11 +352,11 @@ class EncodedByte(object):
         if isinstance(raw_byte, NoByte) or raw_byte is None:
             return " " * encoding2len[encoding]
         if conf.ascii and raw_byte.value in my_printables:
-            return raw_byte + " " * (encoding2len[encoding]-1)
+            return raw_byte.value + " " * (encoding2len[encoding]-1)
         if encoding == 'hex':
             return binascii.hexlify(raw_byte.value)
         elif encoding == 'bin':
-            return "{:08b}".format(ord(raw_byte))
+            return "{:08b}".format(ord(raw_byte.value))
         else:
             raise ValueError("Unknown encoding: %s" % encoding)
 
@@ -370,6 +370,7 @@ class EncodedByteList(object):
     
     def __init__(self, raw_byte_list):
         self.rbl = raw_byte_list
+        self.comment = raw_byte_list.comment
         self._ebl =  [EncodedByte(rb) for rb in self.rbl.get_bytes()]
 
     def get_encoded_byte_list(self):
@@ -390,3 +391,6 @@ class Renderer(object):
         """
         raise NotImplementedError("Abstract method")
 
+    def finalize(self):
+        """Should be called after rendering everything"""
+        pass
