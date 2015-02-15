@@ -75,10 +75,10 @@ opt['align']     = ConfParam('align', type=int, syntax=('start', 'end'),
 opt['min']       = ConfParam('min', type=int, syntax=("min_size"),
                     help="Minimum size to display")
 opt['filter']    = ConfParam('filter', shortname='f', type=str, nargs='+',
-                    syntax="n{=,!}XX", default=[],
+                    syntax="n{=,x}XX", default=[],
                     help="Filter lines that have byte @n set to @XX (in hex). "
-                    "Use n=XX to keep lines that match and n!XX for lines that "
-                    "do not match")
+                    "Use n=XX to keep lines that match and nxXX for lines that "
+                    "do not match (e.g. 3=07 or 25x5a. Ideces start at 0.")
 #opt['sort']      = ConfParam('sort', type=int, syntax=("from_offset"),
 #                    default=0,
 #                    help="Sorts the lines based on the [@from_offset:end] part "

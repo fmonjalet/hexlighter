@@ -61,18 +61,18 @@ class RawByteFilter(object):
 
         Args:
             @filter_spec: a str of the following form:
-                n{=,!}XX, with n a decimal integer and XX a hex value for a
-                byte. n=XX will keep lines that match the rule, n!XX the lines
+                n{=,x}XX, with n a decimal integer and XX a hex value for a
+                byte. n=XX will keep lines that match the rule, nxXX the lines
                 that do not match the rule.
         """
         if "=" in filter_spec:
             filter = self.filter
             l = filter_spec.split("=")
-        elif "!" in filter_spec:
+        elif "x" in filter_spec:
             filter = self.anti_filter
-            l = filter_list.split("!")
+            l = filter_spec.split("x")
         else:
-            raise ValueError("filter_spec must match n{=,!}XX")
+            raise ValueError("filter_spec must match n{=,x}XX")
         n = int(l[0])
         byte = chr(int(l[1], 16))
         filter[n] = byte
