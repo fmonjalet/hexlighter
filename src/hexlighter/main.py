@@ -20,6 +20,7 @@ def main():
             prev = rbl
         ebl = EncodedByteList(rbl)
         renderer.render(ebl)
+    renderer.finalize()
 
 if __name__ == "__main__":
     main()

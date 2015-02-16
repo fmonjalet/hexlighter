@@ -29,6 +29,29 @@ ncc = len(col_c)
 line_c = [d1, d2]
 nlc = len(line_c)
 
+def build_rule(l, shift=0, byte_len=2, start=0):
+    """Returns a string representing a rule with a number every 8 graduations.
+
+    Args:
+        @l: length of the rule, in number of graduations
+        @shift: number of spaces to prepend to the rule
+        @byte_len: size of one graduation
+        @start: first graduation number
+    """
+    ret = []
+    ret.append(' '*shift)
+    i = 0
+    byte_rule = "+" + "-" * (byte_len - 1)
+    for i in xrange(0, l-8, 8):
+        ret.append("|" + (byte_rule * 8)[1:])
+    ret.append("|" + (byte_rule * (l % 8))[1:])
+    ret.append('\n')
+    ret.append(' '*shift)
+    fmt = "%%-%dd" % (byte_len*8)
+    for i in xrange(start, start+l, 8):
+        ret.append(fmt % i)
+    return ''.join(ret).rstrip()
+
 class TermRenderer(Renderer):
     """A renderer that prints a colored output to a terminal."""
 
@@ -36,6 +59,7 @@ class TermRenderer(Renderer):
         super(TermRenderer, self).__init__()
         self.line_no = 0
         self.shift = None
+        self.max_len = 0
 
     def render(self, ebl):
         out = []
@@ -52,7 +76,9 @@ class TermRenderer(Renderer):
         byte_list = ebl.get_encoded_byte_list()
         if not byte_list:
             return
+        l = 0
         for byte in byte_list:
+            l += 1
             displayed += encoding2len[conf.enc]
             if displayed > conf.disp_width:
                 out.append(reset_style)
@@ -71,29 +97,23 @@ class TermRenderer(Renderer):
             out.append(reset_style)
             i += 1
 
+        self.max_len = max(self.max_len, l)
         out.append(reset_style)
-        print ''.join(out)
+        print(''.join(out))
         self.line_no += 1
 
     def finalize(self):
-        #TODO
-        #self._print_rule()
-        pass
+        self._print_rule()
 
-    #def build_rule(self, l, byte_len=2, start=0):
-    #    ret = []
-    #    ret.append(' '*shift)
-    #    byte_len = encoding2len[conf.enc]
-    #    shift = self.shift
-    #    i = 0
-    #    byte_rule = "+" + "-" * (byte_len - 1)
-    #    for i in xrange(0, l-8, 8):
-    #        ret.append("|" + (byte_rule * 8)[1:])
-    #    ret.append("|" + (byte_rule * (l % 8))[1:])
-    #    ret.append('\n')
-    #    ret.append(' '*shift)
-    #    fmt = "%%-%dd" % (byte_len*8)
-    #    for i in xrange(start, start+l, 8):
-    #        ret.append(fmt % i)
-    #    return ''.join(ret)
+    def _print_rule(self):
+        start = 0
+        max_dump_width = conf.disp_width - self.shift
+        max_bytes = max_dump_width // encoding2len[conf.enc]
+
+        out = []
+        for i in xrange(self.max_len//max_bytes + 1):
+            out.append(build_rule(max_bytes, self.shift,
+                                  encoding2len[conf.enc],
+                                  start=i*max_bytes))
+        print('\n'.join(out))
 

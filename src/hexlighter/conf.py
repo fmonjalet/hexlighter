@@ -79,6 +79,7 @@ opt['filter']    = ConfParam('filter', shortname='f', type=str, nargs='+',
                     help="Filter lines that have byte @n set to @XX (in hex). "
                     "Use n=XX to keep lines that match and nxXX for lines that "
                     "do not match (e.g. 3=07 or 25x5a. Ideces start at 0.")
+# TODO
 #opt['sort']      = ConfParam('sort', type=int, syntax=("from_offset"),
 #                    default=0,
 #                    help="Sorts the lines based on the [@from_offset:end] part "
@@ -94,7 +95,6 @@ opt['disp-width'] = ConfParam('disp-width', type=int, syntax=("width"),
 #                    help="Start hexlighter's ncurses interface")
 
 parser = argparse.ArgumentParser()
-#FIXME
 parser.add_argument("file", nargs="?",
                     help="File on which to work. Lines must be in the following"
                     " format: [<comment>] <hex>, for example: toto a5bc43")
