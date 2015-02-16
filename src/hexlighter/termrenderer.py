@@ -87,8 +87,8 @@ class TermRenderer(Renderer):
                 displayed = shift + encoding2len[conf.enc]
                 i = 0
 
-            out.append(col_c[i % ncc])
             for c in byte.get_qchars():
+                out.append(col_c[i % ncc])
                 if conf.diff and c.diff:
                     out.append(diff_color)
                 if c.highlight:
