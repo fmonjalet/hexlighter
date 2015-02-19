@@ -94,7 +94,7 @@ class TermRenderer(Renderer):
                 if c.highlight:
                     out.append(highlight_color)
                 out.append(c.value)
-            out.append(reset_style)
+            out.append(no_color)
             i += 1
 
         self.max_len = max(self.max_len, l)
