@@ -63,9 +63,10 @@ class TermRenderer(Renderer):
 
     def render(self, ebl):
         out = []
+        line_color = line_c[self.line_no % nlc] 
         comment = (ebl.comment + " ") if ebl.comment else ""
         out.append(comment)
-        out.append(line_c[self.line_no % nlc])
+        out.append(line_color)
 
         shift = len(comment)
         self.shift = shift
@@ -83,6 +84,7 @@ class TermRenderer(Renderer):
                 out.append(reset_style)
                 out.append("\n")
                 out.append(" " * shift)
+                out.append(line_color)
                 displayed = shift + encoding2len[conf.enc]
                 i = 0
 
