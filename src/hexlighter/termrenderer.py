@@ -64,8 +64,7 @@ class TermRenderer(Renderer):
     def render(self, ebl):
         out = []
         comment = (ebl.comment + " ") if ebl.comment else ""
-        out.append(ebl.comment)
-        out.append(" ")
+        out.append(comment)
         out.append(line_c[self.line_no % nlc])
 
         shift = len(comment)
