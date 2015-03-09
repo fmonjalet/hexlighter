@@ -183,6 +183,9 @@ class RawByteList(object):
         """
         self.ref = ref_raw_bytes
 
+    def is_empty(self):
+        return not bool(self.get_bytes())
+
     def get_bytes(self):
         """Returns a list of bytes processed. By default, all the processing
         parameters are taken from the conf.
@@ -202,8 +205,12 @@ class RawByteList(object):
         self._pbytes = [RawByte(b) for b in self._bytes]
         # shape tweaks (start + width + alignment)
         self._reshape()
+        if not self._pbytes:
+            return
         # filter (byte + size)
         self._filter()
+        if not self._pbytes:
+            return
         # highlight
         self._highlight()
         # diff

@@ -16,7 +16,7 @@ def main():
         rbl = decoder.decode(line)
         if prev is not None:
             rbl.ref = prev
-        if not conf.master or prev is None:
+        if (prev is None or not conf.master) and not rbl.is_empty():
             prev = rbl
         ebl = EncodedByteList(rbl)
         renderer.render(ebl)
