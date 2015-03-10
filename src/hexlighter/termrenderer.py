@@ -58,20 +58,19 @@ class TermRenderer(Renderer):
     def __init__(self):
         super(TermRenderer, self).__init__()
         self.line_no = 0
-        self.shift = None
+        self.shift = 0
         self.max_len = 0
 
     def render(self, ebl):
         out = []
         line_color = line_c[self.line_no % nlc] 
         comment = (ebl.comment + " ") if ebl.comment else ""
+        self.shift = max(len(comment), self.shift)
+        comment = ("%%-%ds" % self.shift) % comment
         out.append(comment)
         out.append(line_color)
 
-        shift = len(comment)
-        self.shift = shift
-
-        displayed = shift
+        displayed = self.shift
         i = 0
         byte_list = ebl.get_encoded_byte_list()
         if not byte_list:
@@ -83,9 +82,9 @@ class TermRenderer(Renderer):
             if displayed > conf.disp_width:
                 out.append(reset_style)
                 out.append("\n")
-                out.append(" " * shift)
+                out.append(" " * self.shift)
                 out.append(line_color)
-                displayed = shift + encoding2len[conf.enc]
+                displayed = self.shift + encoding2len[conf.enc]
                 i = 0
 
             for c in byte.get_qchars():
