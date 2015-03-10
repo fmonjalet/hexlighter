@@ -61,9 +61,9 @@ class RawByteFilter(object):
 
         Args:
             @filter_spec: a str of the following form:
-                n{=,x}XX, with n a decimal integer and XX a hex value for a
-                byte. n=XX will keep lines that match the rule, nxXX the lines
-                that do not match the rule.
+                n{=,x}XX[,XX]*, with n a decimal integer and XX a hex value for
+                a byte. n=XX will keep lines that match the rule, nxXX the
+                lines that do not match the rule.
         """
         if "=" in filter_spec:
             filter = self.filter
@@ -72,12 +72,14 @@ class RawByteFilter(object):
             filter = self.anti_filter
             l = filter_spec.split("x")
         else:
-            raise ValueError("filter_spec must match n{=,x}XX")
-        n = int(l[0])
-        byte = chr(int(l[1], 16))
-        filter[n] = byte
+            raise ValueError("filter_spec must match n{=,x}XX[,XX]*")
+        index_str = l[0]
+        for value in l[1].split(','):
+            index = int(index_str)
+            byte = chr(int(value, 16))
+            filter.setdefault(index, []).append(byte)
 
-    def rem_filter(self, byte_off):
+    def del_filter(self, byte_off):
         """Deletes all filters concerning @byte_off offset."""
         if byte_off in self.filter:
             del(self.filter[byte_off])
@@ -99,11 +101,11 @@ class RawByteFilter(object):
         """True if a RawByteList matches this filter."""
         blist = rb_list.get_bytes()
         l = len(blist)
-        for index, value in self.filter.iteritems():
-            if index >= l or blist[index].value != value:
+        for index, values in self.filter.iteritems():
+            if index >= l or blist[index].value not in values:
                 return False
-        for index, value in self.anti_filter.iteritems():
-            if index < l and blist[index].value == value:
+        for index, values in self.anti_filter.iteritems():
+            if index < l and blist[index].value in values:
                 return False
         return True
 
