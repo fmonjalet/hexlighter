@@ -40,12 +40,17 @@ class ConfParam(object):
 
 
 available_encodings = ['hex', 'bin']
+available_renderers = ['term', 'draw']
 
 opt = OrderedDict()
 opt['color']     = ConfParam('color', shortname='c',
                     help="Colors bytes to clarify the hexdump")
 opt['diff']      = ConfParam('diff', shortname='d',
                     help="Highlights differences between successive lines.")
+opt['render']    = ConfParam('render', shortname='r', type=str,
+                    choices=available_renderers, default='term',
+                    help="Choose a rendering method. Default is terminal"
+                         "output.")
 opt['precision'] = ConfParam('precision', 'p',
                     help="Diff is as precise as the current encoding allows it "
                     "to be")

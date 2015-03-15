@@ -126,6 +126,11 @@ class RawByte(object):
         self.diff = diff
         self.highlight = highlight
 
+    def is_diff(self):
+        """True if @self is different from its diff attribute (if it has been
+        set."""
+        return self.diff != None and self != self.diff
+
     def __cmp__(self, other):
         if not isinstance(other, RawByte):
             return 1

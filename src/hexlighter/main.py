@@ -3,13 +3,19 @@ import sys
 from hexlighter.core import *
 from hexlighter import conf
 from hexlighter.termrenderer import TermRenderer
+from hexlighter.drawrenderer import DrawRenderer
+
+renderer2class = {
+    'term': TermRenderer,
+    'draw': DrawRenderer,
+}
 
 def main():
     if conf.file:
         f = open(conf.file, "r")
     else:
         f = sys.stdin
-    renderer = TermRenderer()
+    renderer = renderer2class[conf.render]()
     decoder = CommentedHexDecoder()
     prev = None
     for line in f:
