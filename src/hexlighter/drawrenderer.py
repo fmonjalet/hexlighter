@@ -1,7 +1,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 
-from hexlighter.core import Renderer
+from hexlighter.core import Renderer, NoByte
 from hexlighter import conf
 
 normal_color = 0
@@ -52,11 +52,14 @@ class DrawRenderer(Renderer):
 
         for byte in byte_list:
             color = 0.
-            if byte.raw_byte.is_diff():
-                color += diff_color
-            if byte.raw_byte.highlight:
-                color += highlight_color
-            self.maxdiff = max(self.maxdiff, byte.raw_byte.abs_val_diff())
+            if isinstance(byte.raw_byte, NoByte):
+                color = no_color
+            else:
+                if byte.raw_byte.is_diff():
+                    color += diff_color
+                if byte.raw_byte.highlight:
+                    color += highlight_color
+                self.maxdiff = max(self.maxdiff, byte.raw_byte.abs_val_diff())
             cur_line.append(color)
 
     def finalize(self):
@@ -65,9 +68,10 @@ class DrawRenderer(Renderer):
         if conf.precision:
             for i, line in enumerate(self.lines):
                 for j in xrange(len(line)):
-                    line[j] += 0.249 * (
-                                self.byte_lines[i][j].raw_byte.abs_val_diff()
-                                / float(self.maxdiff))
+                    rb = self.byte_lines[i][j].raw_byte
+                    if not isinstance(rb, NoByte):
+                        line[j] += 0.249 * (rb.abs_val_diff()
+                                            / float(self.maxdiff))
 
         for line in self.lines:
             line += [no_color] * (max_len - len(line))
