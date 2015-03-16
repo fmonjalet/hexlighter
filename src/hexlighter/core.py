@@ -131,6 +131,17 @@ class RawByte(object):
         set."""
         return self.diff != None and self != self.diff
 
+    def abs_val_diff(self):
+        """Returns the absolute value of self.value - self.diff.value."""
+        if self.diff is None:
+            return 0
+        val = ord(self.value)
+        other = ord(self.diff.value)
+        if val >= other:
+            return val - other
+        else:
+            return other - val
+
     def __cmp__(self, other):
         if not isinstance(other, RawByte):
             return 1
