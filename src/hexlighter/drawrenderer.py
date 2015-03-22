@@ -79,5 +79,8 @@ class DrawRenderer(Renderer):
         fig, ax = plt.subplots()
         ax.imshow(self.lines, cmap=hexlighter_cm, vmin=0, vmax=1,
                   interpolation='nearest')
-        plt.show()
+        if conf.output:
+            plt.savefig(conf.output)
+        else:
+            plt.show()
 

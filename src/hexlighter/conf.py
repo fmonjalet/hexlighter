@@ -95,6 +95,10 @@ opt['disp-width'] = ConfParam('disp-width', type=int, syntax=("width"),
                      default=None,
                      help="Maximum amount of character to display. Default is "
                      "computed from the terminal properties.")
+opt['output']    = ConfParam('output', shortname='o', type=str,
+                    syntax=("filename"),  default=None,
+                    help="Output file in which to write the result. Only"
+                    "available for the 'draw' renderer.")
 # TODO
 #opt['ui']        = ConfParam('ui', 'x',
 #                    help="Start hexlighter's ncurses interface")
